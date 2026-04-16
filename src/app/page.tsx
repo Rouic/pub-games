@@ -66,47 +66,175 @@ export default function Home() {
   }
 
   return (
-    <div className="page">
-      <div className="center-content" style={{ maxWidth: 480, margin: "0 auto", width: "100%" }}>
-        {/* Header */}
-        <div className="anim-fade" style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>🍺</div>
-          <h1
-            style={{
-              fontSize: "clamp(1.8rem, 6vw, 2.4rem)",
-              fontWeight: 700,
-              letterSpacing: "-0.03em",
-              background: "linear-gradient(135deg, var(--neon-green), var(--neon-pink))",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              marginBottom: "0.3rem",
-            }}
-          >
-            Pub Games
-          </h1>
-          <p style={{ color: "var(--text-dim)", fontSize: "0.95rem" }}>
-            Grab a friend, grab a pint.
-          </p>
+    <div className="page" style={{ overflow: "hidden" }}>
+      {/* Animated background orbs */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
+      }}>
+        <div style={{
+          position: "absolute", top: "-20%", left: "-10%",
+          width: "60vw", height: "60vw", borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(34,211,238,0.12) 0%, transparent 70%)",
+          animation: "float1 8s ease-in-out infinite",
+        }} />
+        <div style={{
+          position: "absolute", bottom: "-20%", right: "-10%",
+          width: "50vw", height: "50vw", borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(244,114,182,0.1) 0%, transparent 70%)",
+          animation: "float2 10s ease-in-out infinite",
+        }} />
+        <div style={{
+          position: "absolute", top: "30%", right: "20%",
+          width: "25vw", height: "25vw", borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(251,191,36,0.06) 0%, transparent 70%)",
+          animation: "float3 12s ease-in-out infinite",
+        }} />
+      </div>
+
+      <style>{`
+        @keyframes float1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-40px) scale(1.1); } }
+        @keyframes float2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-40px,30px) scale(1.15); } }
+        @keyframes float3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(20px,20px); } }
+
+        .game-card {
+          position: relative;
+          display: flex; flex-direction: column; align-items: center;
+          padding: 2rem 1.25rem 1.75rem;
+          border-radius: 20px;
+          cursor: pointer;
+          transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
+          -webkit-tap-highlight-color: transparent;
+          overflow: hidden;
+          text-align: center;
+        }
+        .game-card::before {
+          content: "";
+          position: absolute; inset: 0;
+          border-radius: 20px;
+          padding: 2px;
+          background: var(--card-gradient);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+        }
+        .game-card:hover { transform: translateY(-6px) scale(1.02); }
+        .game-card:active { transform: translateY(-2px) scale(0.98); }
+
+        .game-card.dice {
+          background: linear-gradient(160deg, rgba(34,211,238,0.08), rgba(6,182,212,0.02));
+          --card-gradient: linear-gradient(135deg, rgba(34,211,238,0.6), rgba(34,211,238,0.1));
+          box-shadow: 0 8px 40px rgba(34,211,238,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .game-card.dice:hover { box-shadow: 0 12px 50px rgba(34,211,238,0.3), inset 0 1px 0 rgba(255,255,255,0.08); }
+
+        .game-card.sketch {
+          background: linear-gradient(160deg, rgba(244,114,182,0.08), rgba(236,72,153,0.02));
+          --card-gradient: linear-gradient(135deg, rgba(244,114,182,0.6), rgba(244,114,182,0.1));
+          box-shadow: 0 8px 40px rgba(244,114,182,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .game-card.sketch:hover { box-shadow: 0 12px 50px rgba(244,114,182,0.3), inset 0 1px 0 rgba(255,255,255,0.08); }
+
+        .game-icon {
+          font-size: 4rem;
+          margin-bottom: 0.75rem;
+          filter: drop-shadow(0 0 20px rgba(255,255,255,0.2));
+          animation: iconBounce 3s ease-in-out infinite;
+        }
+        .game-card.dice .game-icon { animation-delay: 0s; }
+        .game-card.sketch .game-icon { animation-delay: 1.5s; }
+        @keyframes iconBounce {
+          0%,100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+
+        .game-title {
+          font-size: 1.35rem;
+          font-weight: 700;
+          color: #ffffff;
+          margin-bottom: 0.4rem;
+          letter-spacing: -0.01em;
+        }
+        .game-desc {
+          font-size: 0.85rem;
+          color: rgba(255,255,255,0.55);
+          line-height: 1.4;
+        }
+
+        .join-section {
+          background: rgba(17,24,39,0.7);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.06);
+          border-radius: 20px;
+          padding: 1.5rem;
+          width: 100%;
+        }
+
+        .hero-title {
+          font-size: clamp(2.2rem, 8vw, 3.5rem);
+          font-weight: 800;
+          letter-spacing: -0.04em;
+          line-height: 1;
+          text-align: center;
+          background: linear-gradient(135deg, #22d3ee 0%, #f472b6 50%, #fbbf24 100%);
+          background-size: 200% 200%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: gradientShift 4s ease-in-out infinite;
+        }
+        @keyframes gradientShift {
+          0%,100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+          color: rgba(255,255,255,0.5);
+          font-size: clamp(0.95rem, 3vw, 1.15rem);
+          text-align: center;
+          font-weight: 400;
+        }
+
+        .player-chip {
+          display: inline-flex; align-items: center; gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 999px;
+          font-size: 0.85rem;
+          color: rgba(255,255,255,0.7);
+          backdrop-filter: blur(10px);
+        }
+
+        .or-divider {
+          display: flex; align-items: center; gap: 1rem;
+          color: rgba(255,255,255,0.2);
+          font-size: 0.75rem; font-weight: 600;
+          letter-spacing: 0.15em; text-transform: uppercase;
+          width: 100%;
+        }
+        .or-divider::before, .or-divider::after {
+          content: ""; flex: 1; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+      `}</style>
+
+      <div className="center-content" style={{
+        maxWidth: 440, margin: "0 auto", width: "100%",
+        position: "relative", zIndex: 1,
+        gap: "1.75rem",
+      }}>
+        {/* Hero */}
+        <div className="anim-fade" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+          <div style={{ fontSize: "3.5rem", filter: "drop-shadow(0 0 30px rgba(251,191,36,0.4))" }}>🍺</div>
+          <h1 className="hero-title">Pub Games</h1>
+          <p className="subtitle">Grab a friend. Grab a pint.</p>
           {player && (
-            <div
-              className="anim-fade"
-              style={{
-                marginTop: "0.75rem",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.4rem 1rem",
-                background: "var(--bg-raised)",
-                borderRadius: "var(--r)",
-                border: "1px solid var(--border)",
-                fontSize: "0.85rem",
-              }}
-            >
-              <span>{player.emoji}</span>
-              <span style={{ fontWeight: 600 }}>{player.name}</span>
+            <div className="player-chip anim-fade" style={{ animationDelay: "0.3s", marginTop: "0.25rem" }}>
+              <span style={{ fontSize: "1.1rem" }}>{player.emoji}</span>
+              <span style={{ fontWeight: 600, color: "#fff" }}>{player.name}</span>
               {player.games_played > 0 && (
-                <span style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>
-                  {player.wins}W / {player.losses}L
+                <span style={{ fontSize: "0.75rem", opacity: 0.5 }}>
+                  {player.wins}W {player.losses}L
                 </span>
               )}
             </div>
@@ -114,74 +242,30 @@ export default function Home() {
         </div>
 
         {/* Game cards */}
-        <div
-          className="anim-slide"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "0.85rem",
-            width: "100%",
-            animationDelay: "0.1s",
-          }}
-        >
-          <button
-            className="card card-interactive glow-green"
-            onClick={() => createGame("dice")}
-            disabled={busy}
-            style={{
-              border: "1px solid rgba(34, 211, 238, 0.25)",
-              textAlign: "center",
-              padding: "1.5rem 1rem",
-            }}
-          >
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🎲</div>
-            <div style={{ fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.25rem" }}>
-              Liar&apos;s Dice
-            </div>
-            <div style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>
-              Bluff your way to victory
-            </div>
+        <div className="anim-slide" style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr",
+          gap: "1rem", width: "100%",
+          animationDelay: "0.15s",
+        }}>
+          <button className="game-card dice" onClick={() => createGame("dice")} disabled={busy}>
+            <div className="game-icon">🎲</div>
+            <div className="game-title">Liar&apos;s Dice</div>
+            <div className="game-desc">Bluff your way to victory</div>
           </button>
 
-          <button
-            className="card card-interactive glow-pink"
-            onClick={() => createGame("sketch")}
-            disabled={busy}
-            style={{
-              border: "1px solid rgba(244, 114, 182, 0.25)",
-              textAlign: "center",
-              padding: "1.5rem 1rem",
-            }}
-          >
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🎨</div>
-            <div style={{ fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.25rem" }}>
-              Sketch Duel
-            </div>
-            <div style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>
-              Draw it, guess it, win it
-            </div>
+          <button className="game-card sketch" onClick={() => createGame("sketch")} disabled={busy}>
+            <div className="game-icon">🎨</div>
+            <div className="game-title">Sketch Duel</div>
+            <div className="game-desc">Draw it. Guess it. Win it.</div>
           </button>
         </div>
 
-        {/* Join existing game */}
-        <div
-          className="card anim-slide"
-          style={{ width: "100%", animationDelay: "0.2s" }}
-        >
-          <div
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              color: "var(--text-muted)",
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
-              marginBottom: "0.75rem",
-              textAlign: "center",
-            }}
-          >
-            Join a friend&apos;s game
-          </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+        {/* Divider */}
+        <div className="or-divider anim-fade" style={{ animationDelay: "0.3s" }}>or join a game</div>
+
+        {/* Join section */}
+        <div className="join-section anim-slide" style={{ animationDelay: "0.25s" }}>
+          <div style={{ display: "flex", gap: "0.6rem" }}>
             <input
               className="input input-code"
               placeholder="CODE"
@@ -189,13 +273,13 @@ export default function Home() {
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               onKeyDown={(e) => e.key === "Enter" && joinGame()}
-              style={{ flex: 1 }}
+              style={{ flex: 1, background: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.1)" }}
             />
             <button
-              className="btn btn-primary"
+              className="btn btn-primary btn-lg"
               onClick={joinGame}
               disabled={busy || joinCode.length < 4}
-              style={{ flexShrink: 0 }}
+              style={{ flexShrink: 0, padding: "1rem 1.75rem" }}
             >
               Join
             </button>
@@ -203,38 +287,34 @@ export default function Home() {
         </div>
 
         {error && (
-          <div
-            className="anim-shake"
-            style={{
-              color: "var(--neon-red)",
-              fontSize: "0.88rem",
-              fontWeight: 600,
-              textAlign: "center",
-            }}
-          >
+          <div className="anim-shake" style={{
+            color: "var(--neon-red)",
+            fontSize: "0.88rem",
+            fontWeight: 600,
+            textAlign: "center",
+          }}>
             {error}
           </div>
         )}
 
         {/* Footer */}
-        <div
-          style={{
-            color: "var(--text-muted)",
-            fontSize: "0.72rem",
-            textAlign: "center",
-            marginTop: "auto",
-            paddingTop: "1rem",
-          }}
-        >
+        <div style={{
+          color: "rgba(255,255,255,0.2)",
+          fontSize: "0.7rem",
+          textAlign: "center",
+          marginTop: "auto",
+          paddingTop: "0.5rem",
+        }}>
           Powered by{" "}
           <a
             href="https://system.rouic.com"
             target="_blank"
             rel="noopener"
-            style={{ color: "var(--neon-green)", textDecoration: "none" }}
+            style={{ color: "rgba(34,211,238,0.5)", textDecoration: "none" }}
           >
             Rouic Platform
           </a>
+          {" "}· Real-time multiplayer via PostgreSQL
         </div>
       </div>
     </div>
