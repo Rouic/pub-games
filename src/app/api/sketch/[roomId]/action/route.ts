@@ -26,7 +26,7 @@ export async function POST(
   const body = await req.json();
   const action = body.action as string;
 
-  let state = room.state as SketchState;
+  let state = room.state as unknown as SketchState;
   let phase = room.phase;
 
   // ── Start game ──

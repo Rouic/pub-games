@@ -26,7 +26,7 @@ export async function POST(
   const body = await req.json();
   const action = body.action as string;
 
-  let state = room.state as DiceState;
+  let state = room.state as unknown as DiceState;
   let phase = room.phase;
 
   // ── Start the game (host only, needs 2 players) ──
