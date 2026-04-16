@@ -14,7 +14,7 @@ export async function GET(
   const room = await getRoom(roomId);
   if (!room) return Response.json({ error: "Room not found" }, { status: 404 });
 
-  const state = room.state as SketchState;
+  const state = room.state as unknown as SketchState;
 
   // Fetch player names
   const playerRes = await query(
