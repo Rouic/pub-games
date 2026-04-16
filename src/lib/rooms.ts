@@ -80,7 +80,7 @@ export async function getRoom(roomId: string): Promise<Room | null> {
 export async function updateRoom(
   roomId: string,
   phase: string,
-  state: Record<string, unknown>
+  state: unknown
 ): Promise<Room> {
   const res = await query(
     `UPDATE rooms SET phase = $2, state = $3, updated_at = now()
