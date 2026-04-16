@@ -1,4 +1,5 @@
 import { pool } from "./db";
+import type { PoolClient } from "pg";
 
 /**
  * Create an SSE ReadableStream backed by PostgreSQL LISTEN/NOTIFY.
@@ -7,6 +8,8 @@ import { pool } from "./db";
  */
 export function createRoomStream(roomId: string): ReadableStream {
   const channel = `room_${roomId.replace(/[^a-zA-Z0-9_]/g, "_")}`;
+  let client: PoolClient | null = null;
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
 
   return new ReadableStream({
     async start(controller) {
@@ -20,9 +23,6 @@ export function createRoomStream(roomId: string): ReadableStream {
           // Stream closed
         }
       };
-
-      let client: Awaited<ReturnType<typeof pool.connect>> | null = null;
-      let heartbeat: ReturnType<typeof setInterval> | null = null;
 
       try {
         client = await pool.connect();
@@ -39,30 +39,23 @@ export function createRoomStream(roomId: string): ReadableStream {
           }
         });
 
-        // Send initial connected event
         send("connected", { channel, ts: Date.now() });
 
-        // Heartbeat to prevent mobile browsers/proxies from killing the connection
         heartbeat = setInterval(() => {
           send("heartbeat", { ts: Date.now() });
         }, 15_000);
-      } catch (err) {
+      } catch {
         send("error", { message: "Failed to connect to event stream" });
         controller.close();
       }
-
-      // Cleanup when the stream is cancelled (client disconnects)
-      return () => {
-        if (heartbeat) clearInterval(heartbeat);
-        if (client) {
-          client.query(`UNLISTEN ${channel}`).catch(() => {});
-          client.release();
-        }
-      };
     },
 
     cancel() {
-      // Handled by the start() return cleanup
+      if (heartbeat) clearInterval(heartbeat);
+      if (client) {
+        client.query(`UNLISTEN ${channel}`).catch(() => {});
+        client.release();
+      }
     },
   });
 }
