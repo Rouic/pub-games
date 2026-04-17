@@ -40,7 +40,7 @@ export default function Home() {
     finally { setBusy(false); }
   }
 
-  async function createGame(game: "dice" | "sketch") {
+  async function createGame(game: "dice" | "sketch" | "redblack") {
     setBusy(true);
     setError("");
     try {
@@ -149,6 +149,13 @@ export default function Home() {
         }
         .game-card.sketch:hover { box-shadow: 0 12px 50px rgba(244,114,182,0.3), inset 0 1px 0 rgba(255,255,255,0.08); }
 
+        .game-card.redblack {
+          background: linear-gradient(160deg, rgba(239,68,68,0.08), rgba(30,41,59,0.08));
+          --card-gradient: linear-gradient(135deg, rgba(239,68,68,0.6), rgba(30,41,59,0.6));
+          box-shadow: 0 8px 40px rgba(239,68,68,0.12), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .game-card.redblack:hover { box-shadow: 0 12px 50px rgba(239,68,68,0.25), inset 0 1px 0 rgba(255,255,255,0.08); }
+
         .game-icon {
           font-size: 4rem;
           margin-bottom: 0.75rem;
@@ -250,8 +257,8 @@ export default function Home() {
 
         {/* Game cards */}
         <div className="anim-slide" style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: "1rem", width: "100%",
+          display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
+          gap: "0.75rem", width: "100%",
           animationDelay: "0.15s",
         }}>
           <button className="game-card dice" onClick={() => createGame("dice")} disabled={busy}>
@@ -264,6 +271,12 @@ export default function Home() {
             <div className="game-icon">🎨</div>
             <div className="game-title">Sketch Duel</div>
             <div className="game-desc">Draw it. Guess it. Win it.</div>
+          </button>
+
+          <button className="game-card redblack" onClick={() => createGame("redblack")} disabled={busy}>
+            <div className="game-icon">🃏</div>
+            <div className="game-title">Red or Black</div>
+            <div className="game-desc">Guess wrong? Drink!</div>
           </button>
         </div>
 
@@ -286,6 +299,28 @@ export default function Home() {
           <div style={{ textAlign: "left" }}>
             <div className="game-title">Pub Tracker</div>
             <div className="game-desc">Rate pubs with friends. Track your favourites over time.</div>
+          </div>
+        </button>
+
+        {/* Leaderboard link */}
+        <button
+          className="game-card anim-slide"
+          onClick={() => router.push("/leaderboard")}
+          style={{
+            width: "100%",
+            animationDelay: "0.25s",
+            background: "linear-gradient(160deg, rgba(167,139,250,0.06), rgba(139,92,246,0.02))",
+            boxShadow: "0 4px 20px rgba(167,139,250,0.08), inset 0 1px 0 rgba(255,255,255,0.05)",
+            "--card-gradient": "linear-gradient(135deg, rgba(167,139,250,0.4), rgba(167,139,250,0.1))",
+            flexDirection: "row",
+            gap: "1rem",
+            padding: "1rem 1.5rem",
+          } as React.CSSProperties}
+        >
+          <div style={{ fontSize: "2rem" }}>{"\ud83c\udfc6"}</div>
+          <div style={{ textAlign: "left" }}>
+            <div className="game-title" style={{ fontSize: "1.1rem" }}>Leaderboard</div>
+            <div className="game-desc">See who&apos;s on top across all games</div>
           </div>
         </button>
 

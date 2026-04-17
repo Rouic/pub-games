@@ -36,6 +36,10 @@ const _migrate = pool.query(`
   CREATE INDEX IF NOT EXISTS idx_beer_logs_pub ON beer_logs(pub_id);
   CREATE INDEX IF NOT EXISTS idx_beer_logs_beer ON beer_logs(beer_id);
   CREATE INDEX IF NOT EXISTS idx_pubs_location ON pubs(lat, lng) WHERE lat IS NOT NULL;
+
+  -- Allow redblack game type
+  ALTER TABLE rooms DROP CONSTRAINT IF EXISTS rooms_game_check;
+  ALTER TABLE rooms ADD CONSTRAINT rooms_game_check CHECK (game IN ('dice', 'sketch', 'redblack'));
 `).catch((e) => console.error("Migration error (non-fatal):", e.message));
 
 export { pool };

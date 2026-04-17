@@ -6,8 +6,8 @@ export async function POST(req: Request) {
   const body = await req.json();
 
   if (body.action === "create") {
-    const game = body.game as "dice" | "sketch";
-    if (!["dice", "sketch"].includes(game)) {
+    const game = body.game as "dice" | "sketch" | "redblack";
+    if (!["dice", "sketch", "redblack"].includes(game)) {
       return Response.json({ error: "Invalid game type" }, { status: 400 });
     }
     const room = await createRoom(game, player.id);

@@ -124,6 +124,9 @@ export async function POST(
 
   // ── Next round ──
   if (action === "next_round") {
+    if (phase !== "round_end") {
+      return Response.json({ ok: true }); // already advanced
+    }
     // Collect used words from state history (simple: just the current word + any in extended state)
     const usedWords = [state.word];
     state = { ...nextSketchRound(state, usedWords), strokes: [] } as SketchState;
