@@ -20,11 +20,22 @@ export default function Home() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Only check for existing player — don't create one on page load
     fetch("/api/auth")
       .then((r) => r.json())
-      .then((d) => setPlayer(d.player))
+      .then((d) => { if (d.player) setPlayer(d.player); })
       .catch(() => {});
   }, []);
+
+  async function forgetMe() {
+    if (!confirm("Delete all your game data? Your anonymous identity, win/loss record, and any active game rooms will be permanently removed.")) return;
+    setBusy(true);
+    try {
+      await fetch("/api/auth", { method: "DELETE" });
+      setPlayer(null);
+    } catch { /* ignore */ }
+    finally { setBusy(false); }
+  }
 
   async function createGame(game: "dice" | "sketch") {
     setBusy(true);
@@ -303,18 +314,54 @@ export default function Home() {
           fontSize: "0.7rem",
           textAlign: "center",
           marginTop: "auto",
-          paddingTop: "0.5rem",
+          paddingTop: "0.75rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem",
+          alignItems: "center",
         }}>
-          Powered by{" "}
-          <a
-            href="https://system.rouic.com"
-            target="_blank"
-            rel="noopener"
-            style={{ color: "rgba(34,211,238,0.5)", textDecoration: "none" }}
-          >
-            Rouic Platform
-          </a>
-          {" "}· Real-time multiplayer via PostgreSQL
+          {player && (
+            <button
+              onClick={forgetMe}
+              disabled={busy}
+              style={{
+                background: "none",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "var(--r-sm)",
+                color: "rgba(255,255,255,0.35)",
+                fontSize: "0.72rem",
+                padding: "0.35rem 0.85rem",
+                cursor: "pointer",
+                transition: "color 0.15s, border-color 0.15s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--neon-red)"; e.currentTarget.style.borderColor = "rgba(248,113,113,0.3)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+            >
+              Forget me &mdash; delete my data
+            </button>
+          )}
+          <div>
+            <a
+              href="/privacy"
+              style={{ color: "rgba(255,255,255,0.3)", textDecoration: "none" }}
+            >
+              Privacy
+            </a>
+            {" · "}
+            Powered by{" "}
+            <a
+              href="https://system.rouic.com"
+              target="_blank"
+              rel="noopener"
+              style={{ color: "rgba(34,211,238,0.5)", textDecoration: "none" }}
+            >
+              Rouic Platform
+            </a>
+          </div>
+          <div style={{ fontSize: "0.65rem", maxWidth: "20rem", lineHeight: 1.5 }}>
+            By creating or joining a game you agree to a functional cookie being set to remember your anonymous identity.{" "}
+            <a href="/privacy" style={{ color: "rgba(34,211,238,0.4)", textDecoration: "none" }}>Learn more</a>
+          </div>
         </div>
       </div>
     </div>

@@ -40,18 +40,20 @@ export interface Player {
   games_played: number;
 }
 
-/** Get or create the current player from cookies. */
-export async function getOrCreatePlayer(): Promise<Player> {
+/** Get the existing player from cookies (returns null if none). */
+export async function getExistingPlayer(): Promise<Player | null> {
   const jar = await cookies();
-  let playerId = jar.get(PLAYER_COOKIE)?.value;
+  const playerId = jar.get(PLAYER_COOKIE)?.value;
+  if (!playerId) return null;
+  const res = await query("SELECT * FROM players WHERE id = $1", [playerId]);
+  return (res.rows[0] as Player) ?? null;
+}
 
-  if (playerId) {
-    const res = await query("SELECT * FROM players WHERE id = $1", [playerId]);
-    if (res.rows[0]) return res.rows[0] as Player;
-  }
-
-  // Create new anonymous player
-  playerId = nanoid(12);
+/** Create a new anonymous player and set the cookie.
+ *  Only called when a user actively creates/joins a game. */
+export async function createPlayer(): Promise<Player> {
+  const jar = await cookies();
+  const playerId = nanoid(12);
   const name = randomName();
   const emoji = randomEmoji();
 
@@ -64,15 +66,42 @@ export async function getOrCreatePlayer(): Promise<Player> {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 365, // 1 year
+    maxAge: 60 * 60 * 24 * 90, // 90 days (not 1 year)
     path: "/",
   });
 
   return { id: playerId, name, emoji, wins: 0, losses: 0, games_played: 0 };
 }
 
+/** Get existing or create — only for game actions (create/join room). */
+export async function getOrCreatePlayer(): Promise<Player> {
+  const existing = await getExistingPlayer();
+  if (existing) return existing;
+  return createPlayer();
+}
+
 /** Read the player ID from cookies without creating (for API routes). */
 export async function getPlayerId(): Promise<string | null> {
   const jar = await cookies();
   return jar.get(PLAYER_COOKIE)?.value ?? null;
+}
+
+/** Delete a player's data and clear their cookie. */
+export async function deletePlayer(): Promise<boolean> {
+  const jar = await cookies();
+  const playerId = jar.get(PLAYER_COOKIE)?.value;
+  if (!playerId) return false;
+
+  await query("DELETE FROM rooms WHERE $1 = ANY(player_ids)", [playerId]);
+  await query("DELETE FROM players WHERE id = $1", [playerId]);
+
+  jar.set(PLAYER_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
+
+  return true;
 }
