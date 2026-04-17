@@ -2,7 +2,16 @@ import { getExistingPlayer, deletePlayer } from "@/lib/auth";
 
 export async function GET() {
   const player = await getExistingPlayer();
-  return Response.json({ player });
+  if (player) {
+    // Include email status (but not the actual email for privacy)
+    return Response.json({
+      player: {
+        ...player,
+        hasClaimed: !!(player as Record<string, unknown>).email,
+      },
+    });
+  }
+  return Response.json({ player: null });
 }
 
 export async function DELETE() {

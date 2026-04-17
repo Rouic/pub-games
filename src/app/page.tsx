@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AccountSheet from "@/components/AccountSheet";
 
 interface Player {
   id: string;
@@ -18,6 +19,7 @@ export default function Home() {
   const [joinCode, setJoinCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [accountOpen, setAccountOpen] = useState(false);
 
   useEffect(() => {
     // Only check for existing player — don't create one on page load
@@ -240,15 +242,19 @@ export default function Home() {
           <h1 className="hero-title">Pub Games</h1>
           <p className="subtitle">Grab a friend. Grab a pint.</p>
           {player && (
-            <div className="player-chip anim-fade" style={{ animationDelay: "0.3s", marginTop: "0.25rem" }}>
+            <button
+              className="player-chip anim-fade"
+              style={{ animationDelay: "0.3s", marginTop: "0.25rem", cursor: "pointer" }}
+              onClick={() => setAccountOpen(true)}
+            >
               <span style={{ fontSize: "1.1rem" }}>{player.emoji}</span>
               <span style={{ fontWeight: 600, color: "#fff" }}>{player.name}</span>
-              {player.games_played > 0 && (
-                <span style={{ fontSize: "0.75rem", opacity: 0.5 }}>
-                  {player.wins}W {player.losses}L
-                </span>
+              {(player as Record<string, unknown>).hasClaimed ? (
+                <span style={{ fontSize: "0.65rem", color: "var(--neon-green)" }}>✓</span>
+              ) : (
+                <span style={{ fontSize: "0.6rem", opacity: 0.4, background: "rgba(255,255,255,0.1)", borderRadius: 4, padding: "1px 5px" }}>tap to save</span>
               )}
-            </div>
+            </button>
           )}
         </div>
 
@@ -386,6 +392,16 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Account sheet */}
+      {player && (
+        <AccountSheet
+          player={player}
+          open={accountOpen}
+          onClose={() => setAccountOpen(false)}
+          onUpdated={(p) => setPlayer(p as Player)}
+        />
+      )}
     </div>
   );
 }
