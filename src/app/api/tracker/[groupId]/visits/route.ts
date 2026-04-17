@@ -22,9 +22,15 @@ export async function POST(
   if (!pubId && body.pubName) {
     pubId = nanoid(12);
     await query(
-      `INSERT INTO pubs (id, name, location, created_by) VALUES ($1, $2, $3, $4)
+      `INSERT INTO pubs (id, name, location, created_by, lat, lng) VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (id) DO NOTHING`,
-      [pubId, body.pubName.trim().slice(0, 100), (body.pubLocation || "").trim().slice(0, 200), player.id]
+      [
+        pubId, body.pubName.trim().slice(0, 100),
+        (body.pubLocation || "").trim().slice(0, 200),
+        player.id,
+        body.lat ? parseFloat(body.lat) : null,
+        body.lng ? parseFloat(body.lng) : null,
+      ]
     );
   }
   if (!pubId) return Response.json({ error: "Pub name required" }, { status: 400 });

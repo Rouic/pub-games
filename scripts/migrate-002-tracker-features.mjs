@@ -1,16 +1,15 @@
-import { Pool, type PoolClient } from "pg";
+import pg from "pg";
 
-const pool = new Pool({
+const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 10,
-  idleTimeoutMillis: 30_000,
 });
 
-// Auto-migrate on first connection
-const _migrate = pool.query(`
+await pool.query(`
+  -- Add geolocation to pubs
   ALTER TABLE pubs ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION;
   ALTER TABLE pubs ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION;
 
+  -- Beers table
   CREATE TABLE IF NOT EXISTS beers (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -19,6 +18,7 @@ const _migrate = pool.query(`
     created_at TIMESTAMPTZ DEFAULT now()
   );
 
+  -- Beer logs (what beer was drunk where, with price)
   CREATE TABLE IF NOT EXISTS beer_logs (
     id TEXT PRIMARY KEY,
     beer_id TEXT REFERENCES beers(id),
@@ -36,21 +36,7 @@ const _migrate = pool.query(`
   CREATE INDEX IF NOT EXISTS idx_beer_logs_pub ON beer_logs(pub_id);
   CREATE INDEX IF NOT EXISTS idx_beer_logs_beer ON beer_logs(beer_id);
   CREATE INDEX IF NOT EXISTS idx_pubs_location ON pubs(lat, lng) WHERE lat IS NOT NULL;
-`).catch((e) => console.error("Migration error (non-fatal):", e.message));
+`);
 
-export { pool };
-
-export async function query(text: string, params?: unknown[]) {
-  return pool.query(text, params);
-}
-
-export async function withClient<T>(
-  fn: (client: PoolClient) => Promise<T>
-): Promise<T> {
-  const client = await pool.connect();
-  try {
-    return await fn(client);
-  } finally {
-    client.release();
-  }
-}
+console.log("Migration 002 complete: tracker features (lat/lng, beers, beer_logs)");
+await pool.end();

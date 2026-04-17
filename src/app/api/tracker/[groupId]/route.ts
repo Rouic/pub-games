@@ -21,7 +21,7 @@ export async function GET(
   );
 
   const pubs = await query(
-    `SELECT pb.*,
+    `SELECT pb.id, pb.name, pb.location, pb.lat, pb.lng,
        COUNT(v.id) as visit_count,
        ROUND(AVG(v.overall), 1) as avg_overall,
        ROUND(AVG(v.rating_options), 1) as avg_options,

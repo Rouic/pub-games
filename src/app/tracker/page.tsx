@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AccountSheet from "@/components/AccountSheet";
 
+interface Player { id: string; name: string; emoji: string; hasClaimed?: boolean; }
 interface Group {
   id: string; code: string; name: string;
   member_count: number; visit_count: number; created_at: string;
@@ -16,8 +18,11 @@ export default function TrackerHub() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [player, setPlayer] = useState<Player | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   useEffect(() => {
+    fetch("/api/auth").then((r) => r.json()).then((d) => { if (d.player) setPlayer(d.player); }).catch(() => {});
     fetch("/api/tracker", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -78,6 +83,17 @@ export default function TrackerHub() {
           <p style={{ color: "var(--text-dim)", fontSize: "0.9rem" }}>
             Rate pubs with friends. Track your favourites.
           </p>
+          {player && (
+            <button className="player-chip" style={{ marginTop: "0.25rem", cursor: "pointer" }} onClick={() => setAccountOpen(true)}>
+              <span style={{ fontSize: "1.1rem" }}>{player.emoji}</span>
+              <span style={{ fontWeight: 600, color: "#fff" }}>{player.name}</span>
+              {player.hasClaimed ? (
+                <span style={{ fontSize: "0.65rem", color: "var(--neon-green)" }}>&#10003;</span>
+              ) : (
+                <span style={{ fontSize: "0.6rem", opacity: 0.4, background: "rgba(255,255,255,0.1)", borderRadius: 4, padding: "1px 5px" }}>tap to save</span>
+              )}
+            </button>
+          )}
         </div>
 
         {/* My groups */}
@@ -150,6 +166,10 @@ export default function TrackerHub() {
 
         <a href="/" style={{ color: "var(--text-muted)", fontSize: "0.8rem", textDecoration: "none" }}>&larr; Back to games</a>
       </div>
+
+      {player && (
+        <AccountSheet player={player} open={accountOpen} onClose={() => setAccountOpen(false)} onUpdated={(p) => setPlayer(p as Player)} />
+      )}
     </div>
   );
 }
