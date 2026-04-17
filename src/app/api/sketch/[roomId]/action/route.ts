@@ -54,7 +54,7 @@ export async function POST(
       return Response.json({ error: "Not the artist" }, { status: 403 });
     }
     // Persist stroke in room state so polling/reconnects can replay it
-    const strokes = ((state as Record<string, unknown>).strokes as unknown[] ?? []);
+    const strokes = ((state as unknown as Record<string, unknown>).strokes as unknown[] ?? []);
     strokes.push(body.stroke);
     // Cap at 500 strokes to avoid massive state
     if (strokes.length > 500) strokes.shift();
