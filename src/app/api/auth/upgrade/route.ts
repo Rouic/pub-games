@@ -104,5 +104,38 @@ export async function POST(req: Request) {
     });
   }
 
+  // ── Update: change name or emoji (works for anon and claimed) ──
+  if (action === "update") {
+    if (!playerId) return Response.json({ error: "No session" }, { status: 400 });
+
+    const name = (body.name ?? "").trim();
+    const emoji = (body.emoji ?? "").trim();
+
+    if (!name && !emoji)
+      return Response.json({ error: "Nothing to update" }, { status: 400 });
+    if (name && (name.length < 1 || name.length > 30))
+      return Response.json({ error: "Name must be 1-30 characters" }, { status: 400 });
+
+    const sets: string[] = [];
+    const vals: unknown[] = [];
+    let i = 1;
+
+    if (name) { sets.push(`name = $${i}`); vals.push(name); i++; }
+    if (emoji) { sets.push(`emoji = $${i}`); vals.push(emoji); i++; }
+    vals.push(playerId);
+
+    const res = await query(
+      `UPDATE players SET ${sets.join(", ")} WHERE id = $${i} RETURNING id, name, emoji, email`,
+      vals
+    );
+
+    if (!res.rows[0]) return Response.json({ error: "Player not found" }, { status: 404 });
+
+    const p = res.rows[0];
+    return Response.json({
+      player: { id: p.id, name: p.name, emoji: p.emoji, hasClaimed: !!p.email },
+    });
+  }
+
   return Response.json({ error: "Unknown action" }, { status: 400 });
 }
