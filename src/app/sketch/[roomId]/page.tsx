@@ -114,13 +114,18 @@ export default function SketchGame() {
       }
       if (event.type === "correct_guess") {
         showToast(`Correct! The word was "${event.word}"`);
+        setGuess("");
+        setWrongGuesses([]);
         fetchState();
       }
       if (event.type === "time_up") {
         showToast(`Time's up! The word was "${event.word}"`);
+        setGuess("");
+        setWrongGuesses([]);
         fetchState();
       }
       if (event.type === "new_round" || event.type === "game_started") {
+        setGuess("");
         setWrongGuesses([]);
         clearCanvas();
         fetchState();

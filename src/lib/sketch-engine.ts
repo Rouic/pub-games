@@ -106,7 +106,19 @@ export function initSketchGame(playerIds: string[]): SketchState {
 }
 
 export function checkGuess(state: SketchState, guess: string): boolean {
-  return guess.toLowerCase().trim() === state.word.toLowerCase().trim();
+  const g = guess.toLowerCase().trim();
+  const w = state.word.toLowerCase().trim();
+  if (g === w) return true;
+  // Accept without trailing 's' (plural of guess matches singular word)
+  if (g === w + "s" || g + "s" === w) return true;
+  // Accept without trailing 'es'
+  if (g === w + "es" || g + "es" === w) return true;
+  // Multi-word: accept if all significant words match (ignore "a", "the", etc.)
+  const strip = (s: string) => s.replace(/\b(a|an|the|of|in|on|at)\b/g, "").replace(/\s+/g, " ").trim();
+  if (strip(g) === strip(w)) return true;
+  // Accept without spaces vs with spaces ("ice cream" = "icecream")
+  if (g.replace(/\s/g, "") === w.replace(/\s/g, "")) return true;
+  return false;
 }
 
 export function scoreGuess(state: SketchState): SketchState {
