@@ -294,6 +294,25 @@ body::before {
 .toast.success { border-color: var(--success); box-shadow: 0 0 20px rgba(52, 211, 153, 0.2); }
 .toast.error   { border-color: var(--danger);  box-shadow: 0 0 20px rgba(248, 113, 113, 0.2); }
 
+/* ── Player chip ────────────────────────────────────────── */
+.player-chip {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.player-chip:hover {
+  border-color: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.07);
+}
+
 /* ── Pill / badge ────────────────────────────────────────── */
 .pill {
   display: inline-flex; align-items: center;

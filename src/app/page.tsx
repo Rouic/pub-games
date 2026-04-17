@@ -208,17 +208,6 @@ export default function Home() {
           font-weight: 400;
         }
 
-        .player-chip {
-          display: inline-flex; align-items: center; gap: 0.5rem;
-          padding: 0.5rem 1rem;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 999px;
-          font-size: 0.85rem;
-          color: rgba(255,255,255,0.7);
-          backdrop-filter: blur(10px);
-        }
-
         .or-divider {
           display: flex; align-items: center; gap: 1rem;
           color: rgba(255,255,255,0.2);
