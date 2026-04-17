@@ -93,6 +93,10 @@ interface GameData {
   playerId: string;
 }
 
+function diceEmoji(face: number) {
+  return ["\u2680", "\u2680", "\u2681", "\u2682", "\u2683", "\u2684", "\u2685"][face] ?? String(face);
+}
+
 export default function DiceGame() {
   const params = useParams();
   const roomId = params.roomId as string;
@@ -130,7 +134,7 @@ export default function DiceGame() {
       });
   }, [data?.room.player_ids]);
 
-  // Initial fetch + SSE + polling fallback for waiting room
+  // Initial fetch + SSE + polling fallback
   useEffect(() => {
     fetchState();
     const es = new EventSource(`/api/dice/${roomId}/stream`);
@@ -139,29 +143,23 @@ export default function DiceGame() {
     es.addEventListener("game", (e) => {
       const event = JSON.parse(e.data);
       if (event.type === "bid") {
-        showToast(`Bid: ${event.bid.qty}x ${diceEmoji(event.bid.face)}`);
+        showToast(`Bid: ${event.bid.qty}\u00d7 ${diceEmoji(event.bid.face)}`);
       }
       if (event.type === "liar_called") {
-        showToast("LIAR! called — revealing dice...");
+        showToast("LIAR! called \u2014 revealing dice...");
         setRolling(true);
         setTimeout(() => setRolling(false), 600);
       }
       if (event.type === "game_over") {
         showToast("Game over!");
       }
-      // Always refresh state after an event
       fetchState();
     });
 
-    // Poll every 3s as fallback (SSE can be unreliable through proxies)
     const poll = setInterval(fetchState, 3000);
 
     return () => { es.close(); clearInterval(poll); };
   }, [roomId, fetchState, showToast]);
-
-  function diceEmoji(face: number) {
-    return ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][face] ?? face;
-  }
 
   async function doAction(body: Record<string, unknown>) {
     setBusy(true);
@@ -194,7 +192,6 @@ export default function DiceGame() {
 
   const { room, playerId } = data;
   const state = room.state;
-  const myName = players[playerId]?.name ?? "You";
   const opponentId = room.player_ids.find((id) => id !== playerId);
   const opponentName = opponentId ? (players[opponentId]?.name ?? "Opponent") : "Waiting...";
 
@@ -211,13 +208,23 @@ export default function DiceGame() {
             </p>
           </div>
           <div className="room-code anim-scale">{room.code}</div>
-          <div className="card anim-slide" style={{ textAlign: "center", width: "100%", maxWidth: 320 }}>
+          <div className="card anim-slide" style={{ textAlign: "center", width: "100%", maxWidth: 340 }}>
             <div style={{ marginBottom: "0.5rem" }}>
               <span style={{ color: "var(--neon-green)" }}>
                 {room.player_ids.length}/2
               </span>{" "}
               <span style={{ color: "var(--text-dim)" }}>players</span>
             </div>
+
+            {/* How to play */}
+            <div style={{ textAlign: "left", margin: "0.75rem 0", padding: "0.75rem", background: "var(--bg-raised)", borderRadius: "var(--r-sm)", fontSize: "0.8rem", color: "var(--text-dim)", lineHeight: 1.6 }}>
+              <div style={{ fontWeight: 700, color: "#fff", marginBottom: "0.4rem", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>How to play</div>
+              <div style={{ marginBottom: "0.4rem" }}>Each player starts with <strong style={{ color: "#fff" }}>5 dice</strong>. You can see your own dice but not your opponent&apos;s.</div>
+              <div style={{ marginBottom: "0.4rem" }}>Take turns bidding how many dice of a face value are on the table <em>in total</em>. E.g. &quot;three 4s&quot; means you think there are at least three dice showing 4 between both players.</div>
+              <div style={{ marginBottom: "0.4rem" }}>Each bid must <strong style={{ color: "#fff" }}>raise the quantity or the face</strong> of the previous bid.</div>
+              <div>If you think the last bid is too high, call <strong style={{ color: "var(--neon-red)" }}>LIAR!</strong> &mdash; all dice are revealed. If the bid was wrong, the bidder loses a die. If it was right, you lose one. Last player with dice wins!</div>
+            </div>
+
             {room.player_ids.length >= 2 && room.host_id === playerId && (
               <button
                 className="btn btn-primary btn-block btn-lg"
@@ -249,6 +256,10 @@ export default function DiceGame() {
   const currentBid = state.currentBid;
   const revealed = state.revealedDice;
   const lastResult = state.lastResult;
+
+  // Total dice in play (for capping bid quantity)
+  const totalDice = Object.values(state.players ?? {}).reduce((sum, p) => sum + (p.diceCount || 0), 0);
+  const maxBidQty = Math.max(totalDice, 1);
 
   // ── Finished ──
   if (room.phase === "finished" && state.winner) {
@@ -298,9 +309,9 @@ export default function DiceGame() {
         }}
       >
         <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-          Round {state.round ?? 1}
+          Round {state.round ?? 1} &middot; {totalDice} dice left
         </div>
-        <div className="pill live">
+        <div className={`pill ${isMyTurn ? "live" : ""}`}>
           {isMyTurn ? "Your turn" : `${opponentName}'s turn`}
         </div>
       </div>
@@ -354,6 +365,18 @@ export default function DiceGame() {
           <span style={{ fontWeight: 700, fontSize: "1.2rem", color: "var(--neon-amber)" }}>
             {currentBid.qty} &times; {diceEmoji(currentBid.face)}
           </span>
+          {state.lastBidder && (
+            <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginLeft: "0.5rem" }}>
+              by {state.lastBidder === playerId ? "you" : opponentName}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* First turn hint (no bid yet) */}
+      {!currentBid && isMyTurn && room.phase === "playing" && (
+        <div style={{ textAlign: "center", padding: "0.5rem", marginBottom: "0.5rem", color: "var(--text-dim)", fontSize: "0.82rem" }}>
+          You go first! Look at your dice and make a bid about how many of a face value are on the table in total.
         </div>
       )}
 
@@ -371,13 +394,17 @@ export default function DiceGame() {
           <div style={{ fontSize: "1.5rem", marginBottom: "0.3rem" }}>
             {lastResult.callerWon ? "🎉 Bluff caught!" : "😅 Bid was true!"}
           </div>
-          <div style={{ color: "var(--text-dim)", fontSize: "0.85rem" }}>
+          <div style={{ color: "var(--text-dim)", fontSize: "0.85rem", marginBottom: "0.3rem" }}>
             Actual count of {diceEmoji(lastResult.bid.face)}: <strong>{lastResult.totalOfFace}</strong>{" "}
             (bid was {lastResult.bid.qty})
           </div>
+          <div style={{ color: "var(--text-muted)", fontSize: "0.78rem", marginBottom: "0.75rem" }}>
+            {lastResult.callerWon
+              ? `${lastResult.bidder === playerId ? "You lose" : opponentName + " loses"} a die`
+              : `${lastResult.caller === playerId ? "You lose" : opponentName + " loses"} a die`}
+          </div>
           <button
             className="btn btn-primary btn-sm"
-            style={{ marginTop: "0.75rem" }}
             onClick={() => doAction({ action: "next_round" })}
             disabled={busy}
           >
@@ -415,63 +442,41 @@ export default function DiceGame() {
       {/* Bid controls (only when it's my turn + playing phase) */}
       {isMyTurn && room.phase === "playing" && (
         <div className="card anim-slide" style={{ marginBottom: "0.75rem" }}>
-          <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: "7rem" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "0.72rem",
-                  fontWeight: 600,
-                  color: "var(--text-muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: "0.3rem",
-                }}
-              >
-                Quantity
-              </label>
-              <div style={{ display: "flex", gap: "0.35rem" }}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                  <button
-                    key={n}
-                    className={`btn btn-sm ${bidQty === n ? "btn-primary" : ""}`}
-                    style={{ padding: "0.5rem", minWidth: "2.2rem" }}
-                    onClick={() => setBidQty(n)}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "0.72rem",
-                  fontWeight: 600,
-                  color: "var(--text-muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: "0.3rem",
-                }}
-              >
-                Face
-              </label>
-              <div style={{ display: "flex", gap: "0.35rem" }}>
-                {[1, 2, 3, 4, 5, 6].map((f) => (
-                  <button
-                    key={f}
-                    className={`btn btn-sm ${bidFace === f ? "btn-primary" : ""}`}
-                    style={{ padding: "0.4rem", minWidth: "2.5rem", fontSize: "1.1rem" }}
-                    onClick={() => setBidFace(f)}
-                  >
-                    {diceEmoji(f)}
-                  </button>
-                ))}
-              </div>
+          <div style={{ marginBottom: "0.6rem" }}>
+            <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
+              How many? (total across both players)
+            </label>
+            <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+              {Array.from({ length: maxBidQty }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  className={`btn btn-sm ${bidQty === n ? "btn-primary" : ""}`}
+                  style={{ padding: "0.45rem 0.6rem", minWidth: "2rem", fontSize: "0.85rem" }}
+                  onClick={() => setBidQty(n)}
+                >
+                  {n}
+                </button>
+              ))}
             </div>
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.85rem" }}>
+          <div style={{ marginBottom: "0.6rem" }}>
+            <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
+              Which face?
+            </label>
+            <div style={{ display: "flex", gap: "0.35rem" }}>
+              {[1, 2, 3, 4, 5, 6].map((f) => (
+                <button
+                  key={f}
+                  className={`btn btn-sm ${bidFace === f ? "btn-primary" : ""}`}
+                  style={{ padding: "0.4rem 0.6rem", minWidth: "2.5rem", fontSize: "1.1rem" }}
+                  onClick={() => setBidFace(f)}
+                >
+                  {diceEmoji(f)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
             <button
               className="btn btn-primary"
               style={{ flex: 1 }}
@@ -491,6 +496,11 @@ export default function DiceGame() {
               </button>
             )}
           </div>
+          {currentBid && (
+            <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.4rem", textAlign: "center" }}>
+              Must bid higher than {currentBid.qty}&times;{diceEmoji(currentBid.face)} &mdash; raise the quantity or the face value
+            </p>
+          )}
         </div>
       )}
 
@@ -500,7 +510,7 @@ export default function DiceGame() {
           className="anim-pulse"
           style={{ textAlign: "center", color: "var(--text-dim)", padding: "1rem" }}
         >
-          Waiting for {opponentName} to bid or call...
+          Waiting for {opponentName} to {currentBid ? "bid or call LIAR" : "make the first bid"}...
         </div>
       )}
 

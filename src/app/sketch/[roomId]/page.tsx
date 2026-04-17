@@ -22,6 +22,8 @@ export default function SketchGame() {
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const drawingRef = useRef(false);
   const pointsRef = useRef<{ x: number; y: number }[]>([]);
+  const canvasInitRef = useRef(false);
+  const drawnStrokeCountRef = useRef(0);
   const [brushColor] = useState("#222222");
   const [brushWidth] = useState(4);
 
@@ -30,18 +32,67 @@ export default function SketchGame() {
     setTimeout(() => setToast(""), 2500);
   }, []);
 
+  // Draw a single stroke on canvas
+  const drawStroke = useCallback((stroke: Stroke) => {
+    const ctx = ctxRef.current;
+    const canvas = canvasRef.current;
+    if (!ctx || !canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    ctx.strokeStyle = stroke.color;
+    ctx.lineWidth = stroke.width;
+    ctx.beginPath();
+    stroke.points.forEach((p, i) => {
+      const x = p.x * rect.width;
+      const y = p.y * rect.height;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }, []);
+
+  const clearCanvas = useCallback(() => {
+    const ctx = ctxRef.current;
+    const canvas = canvasRef.current;
+    if (ctx && canvas) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    drawnStrokeCountRef.current = 0;
+  }, []);
+
+  // Replay stored strokes (only draws new ones since last replay)
+  const replayStrokes = useCallback((strokes: Stroke[]) => {
+    if (!strokes || strokes.length === 0) {
+      if (drawnStrokeCountRef.current > 0) {
+        clearCanvas();
+      }
+      return;
+    }
+    // Only draw strokes we haven't drawn yet
+    const startIdx = drawnStrokeCountRef.current;
+    if (startIdx >= strokes.length) return;
+    for (let i = startIdx; i < strokes.length; i++) {
+      drawStroke(strokes[i]);
+    }
+    drawnStrokeCountRef.current = strokes.length;
+  }, [drawStroke, clearCanvas]);
+
   const fetchState = useCallback(async () => {
     try {
       const res = await fetch(`/api/sketch/${roomId}`);
       const d = await res.json();
       if (d.room) {
         setRoom(d.room);
-        setState(d.room.state ?? {});
+        const newState = d.room.state ?? {};
+        setState(newState);
         setPlayerId(d.playerId);
         if (d.players) setPlayers(d.players);
+        // Replay strokes from server state (incremental)
+        if (newState.strokes) {
+          replayStrokes(newState.strokes as Stroke[]);
+        }
       }
     } catch { /* retry */ }
-  }, [roomId]);
+  }, [roomId, replayStrokes]);
 
   // SSE for real-time events
   useEffect(() => {
@@ -53,6 +104,7 @@ export default function SketchGame() {
 
       if (event.type === "stroke") {
         drawStroke(event.stroke);
+        drawnStrokeCountRef.current++;
       }
       if (event.type === "clear_canvas") {
         clearCanvas();
@@ -78,11 +130,12 @@ export default function SketchGame() {
       }
     });
 
-    // Poll every 3s as fallback (SSE can be unreliable through proxies)
+    // Poll every 3s as fallback — strokes are now persisted in state,
+    // so replayStrokes will incrementally draw any we missed via SSE
     const poll = setInterval(fetchState, 3000);
 
     return () => { es.close(); clearInterval(poll); };
-  }, [roomId, fetchState, showToast]);
+  }, [roomId, fetchState, showToast, drawStroke, clearCanvas]);
 
   // Timer countdown
   useEffect(() => {
@@ -100,11 +153,13 @@ export default function SketchGame() {
     return () => clearInterval(interval);
   }, [state.roundStartedAt, state.roundTimeLimit, room]);
 
-  // Init canvas
+  // Init canvas — ONCE on mount, not on room state changes
   useEffect(() => {
+    if (canvasInitRef.current) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0) return; // not visible yet
     canvas.width = rect.width * 2;
     canvas.height = rect.height * 2;
     const ctx = canvas.getContext("2d");
@@ -113,33 +168,9 @@ export default function SketchGame() {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctxRef.current = ctx;
+      canvasInitRef.current = true;
     }
-  }, [room]);
-
-  function clearCanvas() {
-    const ctx = ctxRef.current;
-    const canvas = canvasRef.current;
-    if (ctx && canvas) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-  }
-
-  function drawStroke(stroke: Stroke) {
-    const ctx = ctxRef.current;
-    const canvas = canvasRef.current;
-    if (!ctx || !canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.strokeStyle = stroke.color;
-    ctx.lineWidth = stroke.width;
-    ctx.beginPath();
-    stroke.points.forEach((p, i) => {
-      const x = p.x * rect.width;
-      const y = p.y * rect.height;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-  }
+  });
 
   function getPos(e: React.TouchEvent | React.MouseEvent) {
     const canvas = canvasRef.current;
@@ -167,7 +198,6 @@ export default function SketchGame() {
     e.preventDefault();
     const pos = getPos(e);
     pointsRef.current.push(pos);
-    // Draw locally for immediate feedback
     const ctx = ctxRef.current;
     const canvas = canvasRef.current;
     if (ctx && canvas) {
@@ -188,7 +218,7 @@ export default function SketchGame() {
     drawingRef.current = false;
     const points = pointsRef.current;
     if (points.length > 1) {
-      // Send stroke to server (which broadcasts to other player)
+      drawnStrokeCountRef.current++;
       fetch(`/api/sketch/${roomId}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -258,6 +288,13 @@ export default function SketchGame() {
               <span style={{ color: "var(--neon-pink)" }}>{playerIds.length}/2</span>{" "}
               <span style={{ color: "var(--text-dim)" }}>players</span>
             </div>
+
+            {/* How to play */}
+            <div style={{ textAlign: "left", margin: "0.75rem 0", padding: "0.75rem", background: "var(--bg-raised)", borderRadius: "var(--r-sm)", fontSize: "0.8rem", color: "var(--text-dim)", lineHeight: 1.6 }}>
+              <div style={{ fontWeight: 700, color: "#fff", marginBottom: "0.3rem", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>How to play</div>
+              Take turns drawing and guessing. The artist sees a word and draws it &mdash; the guesser types what they think it is. Faster guesses score more points. 8 rounds, highest score wins!
+            </div>
+
             {playerIds.length >= 2 && hostId === playerId && (
               <button
                 className="btn btn-primary btn-block btn-lg"

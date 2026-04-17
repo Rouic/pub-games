@@ -36,7 +36,7 @@ export async function POST(
     if (room.player_ids.length < 2)
       return Response.json({ error: "Need 2 players" }, { status: 400 });
 
-    state = initSketchGame(room.player_ids);
+    state = { ...initSketchGame(room.player_ids), strokes: [] } as SketchState;
     phase = "playing";
     await updateRoom(roomId, phase, state);
     // Send word only to the artist (via separate masked event)
@@ -53,10 +53,15 @@ export async function POST(
     if (playerId !== state.artistId) {
       return Response.json({ error: "Not the artist" }, { status: 403 });
     }
-    // Just broadcast the stroke — no DB update needed for individual strokes
+    // Persist stroke in room state so polling/reconnects can replay it
+    const strokes = ((state as Record<string, unknown>).strokes as unknown[] ?? []);
+    strokes.push(body.stroke);
+    // Cap at 500 strokes to avoid massive state
+    if (strokes.length > 500) strokes.shift();
+    await updateRoom(roomId, phase, { ...state, strokes });
     await broadcastEvent(roomId, {
       type: "stroke",
-      stroke: body.stroke, // { points: [{x,y}], color, width }
+      stroke: body.stroke,
     });
     return Response.json({ ok: true });
   }
@@ -66,6 +71,7 @@ export async function POST(
     if (playerId !== state.artistId) {
       return Response.json({ error: "Not the artist" }, { status: 403 });
     }
+    await updateRoom(roomId, phase, { ...state, strokes: [] });
     await broadcastEvent(roomId, { type: "clear_canvas" });
     return Response.json({ ok: true });
   }
@@ -120,7 +126,7 @@ export async function POST(
   if (action === "next_round") {
     // Collect used words from state history (simple: just the current word + any in extended state)
     const usedWords = [state.word];
-    state = nextSketchRound(state, usedWords);
+    state = { ...nextSketchRound(state, usedWords), strokes: [] } as SketchState;
     phase = state.winner ? "finished" : "playing";
 
     if (state.winner) {
