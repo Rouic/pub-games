@@ -126,9 +126,8 @@ export function scoreGuess(state: SketchState): SketchState {
   // Faster guess = more points (max 100 if instant, min 10 if last second)
   const timeBonus = Math.max(10, Math.round(100 * (1 - elapsed / state.roundTimeLimit)));
   const scores = { ...state.scores };
-  // Artist gets 75% of the time bonus (reward good drawing)
-  scores[state.artistId] = (scores[state.artistId] ?? 0) + Math.round(timeBonus * 0.75);
-  // Guesser gets full time bonus
+  // Both players get equal points — drawing well is just as skilful as guessing
+  scores[state.artistId] = (scores[state.artistId] ?? 0) + timeBonus;
   scores[state.guesserId] = (scores[state.guesserId] ?? 0) + timeBonus;
 
   return { ...state, scores, guessedCorrectly: true };

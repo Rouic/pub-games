@@ -24,6 +24,7 @@ export default function SketchGame() {
   const pointsRef = useRef<{ x: number; y: number }[]>([]);
   const canvasInitRef = useRef(false);
   const drawnStrokeCountRef = useRef(0);
+  const lastRoundRef = useRef(0);
   const [brushColor, setBrushColor] = useState("#222222");
   const [brushWidth, setBrushWidth] = useState(4);
 
@@ -81,8 +82,20 @@ export default function SketchGame() {
       const res = await fetch(`/api/sketch/${roomId}`);
       const d = await res.json();
       if (d.room) {
-        setRoom(d.room);
         const newState = d.room.state ?? {};
+        // Detect round change — clear input and canvas
+        const newRound = (newState.round as number) || 0;
+        if (newRound > 0 && newRound !== lastRoundRef.current) {
+          if (lastRoundRef.current > 0) {
+            // Round actually changed (not initial load)
+            setGuess("");
+            setWrongGuesses([]);
+            clearCanvas();
+            drawnStrokeCountRef.current = 0;
+          }
+          lastRoundRef.current = newRound;
+        }
+        setRoom(d.room);
         setState(newState);
         setPlayerId(d.playerId);
         if (d.players) setPlayers(d.players);
