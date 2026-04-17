@@ -24,8 +24,8 @@ export default function SketchGame() {
   const pointsRef = useRef<{ x: number; y: number }[]>([]);
   const canvasInitRef = useRef(false);
   const drawnStrokeCountRef = useRef(0);
-  const [brushColor] = useState("#222222");
-  const [brushWidth] = useState(4);
+  const [brushColor, setBrushColor] = useState("#222222");
+  const [brushWidth, setBrushWidth] = useState(4);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -430,21 +430,59 @@ export default function SketchGame() {
         <canvas ref={canvasRef} />
       </div>
 
-      {/* Artist: clear button | Guesser: guess input */}
+      {/* Artist: tools */}
       {isArtist && phase === "playing" && (
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={() => {
-            clearCanvas();
-            fetch(`/api/sketch/${roomId}/action`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "clear" }),
-            });
-          }}
-        >
-          Clear canvas
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+          {/* Colour palette */}
+          <div style={{ display: "flex", gap: "0.3rem", justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+            {[
+              "#222222", "#ef4444", "#f97316", "#eab308", "#22c55e",
+              "#3b82f6", "#8b5cf6", "#ec4899", "#78716c", "#ffffff",
+            ].map((c) => (
+              <button
+                key={c}
+                onClick={() => setBrushColor(c)}
+                style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: c, border: brushColor === c ? "3px solid var(--neon-green)" : c === "#ffffff" ? "2px solid #ccc" : "2px solid transparent",
+                  cursor: "pointer", flexShrink: 0,
+                  boxShadow: brushColor === c ? "0 0 8px rgba(34,211,238,0.4)" : "none",
+                  transition: "border-color 0.15s, box-shadow 0.15s",
+                }}
+              />
+            ))}
+            {/* Brush sizes */}
+            <div style={{ width: 1, height: 20, background: "var(--border)", margin: "0 0.2rem" }} />
+            {[2, 4, 8, 14].map((w) => (
+              <button
+                key={w}
+                onClick={() => setBrushWidth(w)}
+                style={{
+                  width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                  background: brushWidth === w ? "rgba(34,211,238,0.15)" : "transparent",
+                  border: brushWidth === w ? "2px solid var(--neon-green)" : "2px solid var(--border)",
+                  cursor: "pointer", flexShrink: 0,
+                }}
+              >
+                <div style={{ width: w + 2, height: w + 2, borderRadius: "50%", background: "#fff" }} />
+              </button>
+            ))}
+          </div>
+          {/* Clear button */}
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => {
+              clearCanvas();
+              fetch(`/api/sketch/${roomId}/action`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "clear" }),
+              });
+            }}
+          >
+            Clear canvas
+          </button>
+        </div>
       )}
 
       {!isArtist && phase === "playing" && (
