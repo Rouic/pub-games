@@ -423,7 +423,7 @@ export default function TrackerGroup() {
           <h1 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#fff", margin: 0 }}>{group?.name ?? "Tracker"}</h1>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
             Code: <span style={{ fontFamily: "var(--mono)", color: "var(--neon-amber)", fontWeight: 700 }}>{group?.code}</span>
-            {" \u00b7 "}{members.length} members \u00b7 {pubs.length} pubs
+            {" \u00b7 "}{members.length} members {"\u00b7"} {pubs.length} pubs
           </div>
         </div>
         {player && (
@@ -644,7 +644,7 @@ export default function TrackerGroup() {
 
           <textarea
             className="input"
-            placeholder="Notes (optional) \u2014 what did you think?"
+            placeholder="Notes (optional) &mdash; what did you think?"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             style={{ marginTop: "1rem", minHeight: "3.5rem", resize: "vertical" }}
@@ -729,7 +729,7 @@ export default function TrackerGroup() {
             }))} />
             <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center", marginTop: "0.5rem" }}>
               <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                {stats.averages?.total_visits ?? 0} visits \u00b7 {stats.averages?.unique_pubs ?? 0} pubs \u00b7 {stats.averages?.active_raters ?? 0} raters
+                {stats.averages?.total_visits ?? 0} visits {"\u00b7"} {stats.averages?.unique_pubs ?? 0} pubs {"\u00b7"} {stats.averages?.active_raters ?? 0} raters
               </span>
             </div>
           </div>
@@ -811,7 +811,7 @@ export default function TrackerGroup() {
         <div>
           <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
             <h3 style={{ fontSize: "0.82rem", fontWeight: 600, color: "#fff", marginBottom: "0.5rem" }}>Invite friends</h3>
-            <p style={{ fontSize: "0.78rem", color: "var(--text-dim)", marginBottom: "0.5rem" }}>Share this code \u2014 they enter it on the Pub Tracker page</p>
+            <p style={{ fontSize: "0.78rem", color: "var(--text-dim)", marginBottom: "0.5rem" }}>Share this code &mdash; they enter it on the Pub Tracker page</p>
             <div className="room-code" style={{ fontSize: "2rem" }}>{group?.code}</div>
           </div>
           {members.map((m) => (

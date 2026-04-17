@@ -78,7 +78,10 @@ export default function SketchGame() {
       }
     });
 
-    return () => es.close();
+    // Poll every 3s as fallback (SSE can be unreliable through proxies)
+    const poll = setInterval(fetchState, 3000);
+
+    return () => { es.close(); clearInterval(poll); };
   }, [roomId, fetchState, showToast]);
 
   // Timer countdown

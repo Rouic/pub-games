@@ -130,7 +130,7 @@ export default function DiceGame() {
       });
   }, [data?.room.player_ids]);
 
-  // Initial fetch + SSE
+  // Initial fetch + SSE + polling fallback for waiting room
   useEffect(() => {
     fetchState();
     const es = new EventSource(`/api/dice/${roomId}/stream`);
@@ -153,7 +153,10 @@ export default function DiceGame() {
       fetchState();
     });
 
-    return () => es.close();
+    // Poll every 3s as fallback (SSE can be unreliable through proxies)
+    const poll = setInterval(fetchState, 3000);
+
+    return () => { es.close(); clearInterval(poll); };
   }, [roomId, fetchState, showToast]);
 
   function diceEmoji(face: number) {
