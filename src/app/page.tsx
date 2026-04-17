@@ -257,27 +257,30 @@ export default function Home() {
 
         {/* Game cards */}
         <div className="anim-slide" style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
+          display: "flex", flexDirection: "column",
           gap: "0.75rem", width: "100%",
           animationDelay: "0.15s",
         }}>
-          <button className="game-card dice" onClick={() => createGame("dice")} disabled={busy}>
-            <div className="game-icon">🎲</div>
-            <div className="game-title">Liar&apos;s Dice</div>
-            <div className="game-desc">Bluff your way to victory</div>
-          </button>
-
-          <button className="game-card sketch" onClick={() => createGame("sketch")} disabled={busy}>
-            <div className="game-icon">🎨</div>
-            <div className="game-title">Sketch Duel</div>
-            <div className="game-desc">Draw it. Guess it. Win it.</div>
-          </button>
-
-          <button className="game-card redblack" onClick={() => createGame("redblack")} disabled={busy}>
-            <div className="game-icon">🃏</div>
-            <div className="game-title">Red or Black</div>
-            <div className="game-desc">Guess wrong? Drink!</div>
-          </button>
+          {[
+            { cls: "dice", game: "dice" as const, icon: "🎲", title: "Liar\u2019s Dice", desc: "Bluff your way to victory", players: "2 players" },
+            { cls: "sketch", game: "sketch" as const, icon: "🎨", title: "Sketch Duel", desc: "Draw it. Guess it. Win it.", players: "2 players" },
+            { cls: "redblack", game: "redblack" as const, icon: "🃏", title: "Red or Black", desc: "Guess wrong? Drink!", players: "2\u201310 players" },
+          ].map((g) => (
+            <button
+              key={g.game}
+              className={`game-card ${g.cls}`}
+              onClick={() => createGame(g.game)}
+              disabled={busy}
+              style={{ flexDirection: "row", gap: "1rem", padding: "1.1rem 1.25rem", textAlign: "left" }}
+            >
+              <div className="game-icon" style={{ fontSize: "2.5rem", marginBottom: 0 }}>{g.icon}</div>
+              <div style={{ flex: 1 }}>
+                <div className="game-title" style={{ fontSize: "1.15rem" }}>{g.title}</div>
+                <div className="game-desc">{g.desc}</div>
+              </div>
+              <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.35)", alignSelf: "center", whiteSpace: "nowrap" }}>{g.players}</div>
+            </button>
+          ))}
         </div>
 
         {/* Pub Tracker */}
