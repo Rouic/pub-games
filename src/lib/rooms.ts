@@ -12,7 +12,7 @@ function generateCode(): string {
 export interface Room {
   id: string;
   code: string;
-  game: "dice" | "sketch" | "redblack";
+  game: string;
   state: Record<string, unknown>;
   phase: string;
   host_id: string;
@@ -22,7 +22,7 @@ export interface Room {
 }
 
 export async function createRoom(
-  game: "dice" | "sketch" | "redblack",
+  game: string,
   hostId: string
 ): Promise<Room> {
   const id = nanoid(16);
@@ -57,7 +57,7 @@ export async function joinRoom(code: string, playerId: string): Promise<Room | n
      WHERE code = $1
        AND NOT ($2 = ANY(player_ids))
        AND phase = 'waiting'
-       AND array_length(player_ids, 1) < CASE WHEN game = 'redblack' THEN 10 ELSE 2 END
+       AND array_length(player_ids, 1) < CASE WHEN game IN ('redblack', 'highlow', 'mostlikely') THEN 10 ELSE 2 END
      RETURNING *`,
     [code.toUpperCase(), playerId]
   );

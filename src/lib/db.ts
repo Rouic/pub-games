@@ -39,7 +39,7 @@ const _migrate = pool.query(`
 
   -- Allow redblack game type
   ALTER TABLE rooms DROP CONSTRAINT IF EXISTS rooms_game_check;
-  ALTER TABLE rooms ADD CONSTRAINT rooms_game_check CHECK (game IN ('dice', 'sketch', 'redblack'));
+  ALTER TABLE rooms ADD CONSTRAINT rooms_game_check CHECK (game IN ('dice', 'sketch', 'redblack', 'highlow', 'mostlikely'));
 `).catch((e) => console.error("Migration error (non-fatal):", e.message));
 
 export { pool };

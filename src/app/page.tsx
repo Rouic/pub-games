@@ -40,7 +40,7 @@ export default function Home() {
     finally { setBusy(false); }
   }
 
-  async function createGame(game: "dice" | "sketch" | "redblack") {
+  async function createGame(game: string) {
     setBusy(true);
     setError("");
     try {
@@ -156,6 +156,20 @@ export default function Home() {
         }
         .game-card.redblack:hover { box-shadow: 0 12px 50px rgba(239,68,68,0.25), inset 0 1px 0 rgba(255,255,255,0.08); }
 
+        .game-card.highlow {
+          background: linear-gradient(160deg, rgba(16,185,129,0.08), rgba(5,150,105,0.02));
+          --card-gradient: linear-gradient(135deg, rgba(16,185,129,0.6), rgba(16,185,129,0.1));
+          box-shadow: 0 8px 40px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .game-card.highlow:hover { box-shadow: 0 12px 50px rgba(16,185,129,0.25), inset 0 1px 0 rgba(255,255,255,0.08); }
+
+        .game-card.mostlikely {
+          background: linear-gradient(160deg, rgba(167,139,250,0.08), rgba(139,92,246,0.02));
+          --card-gradient: linear-gradient(135deg, rgba(167,139,250,0.6), rgba(167,139,250,0.1));
+          box-shadow: 0 8px 40px rgba(167,139,250,0.12), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .game-card.mostlikely:hover { box-shadow: 0 12px 50px rgba(167,139,250,0.25), inset 0 1px 0 rgba(255,255,255,0.08); }
+
         .game-icon {
           font-size: 4rem;
           margin-bottom: 0.75rem;
@@ -262,9 +276,11 @@ export default function Home() {
           animationDelay: "0.15s",
         }}>
           {[
-            { cls: "dice", game: "dice" as const, icon: "🎲", title: "Liar\u2019s Dice", desc: "Bluff your way to victory", players: "2 players" },
-            { cls: "sketch", game: "sketch" as const, icon: "🎨", title: "Sketch Duel", desc: "Draw it. Guess it. Win it.", players: "2 players" },
-            { cls: "redblack", game: "redblack" as const, icon: "🃏", title: "Red or Black", desc: "Guess wrong? Drink!", players: "2\u201310 players" },
+            { cls: "dice", game: "dice", icon: "🎲", title: "Liar\u2019s Dice", desc: "Bluff your way to victory", players: "2 players" },
+            { cls: "sketch", game: "sketch", icon: "🎨", title: "Sketch Duel", desc: "Draw it. Guess it. Win it.", players: "2 players" },
+            { cls: "redblack", game: "redblack", icon: "🃏", title: "Red or Black", desc: "Guess wrong? Drink!", players: "2\u201310 players" },
+            { cls: "highlow", game: "highlow", icon: "📈", title: "Higher or Lower", desc: "Next card up or down?", players: "2\u201310 players" },
+            { cls: "mostlikely", game: "mostlikely", icon: "\ud83e\udd14", title: "Most Likely To", desc: "Vote. Drink. Repeat.", players: "3\u201310 players" },
           ].map((g) => (
             <button
               key={g.game}

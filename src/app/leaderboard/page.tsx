@@ -24,12 +24,16 @@ const GAME_ICONS: Record<string, string> = {
   dice: "\ud83c\udfb2",
   sketch: "\ud83c\udfa8",
   redblack: "\ud83c\udccf",
+  highlow: "\ud83d\udcc8",
+  mostlikely: "\ud83e\udd14",
 };
 
 const GAME_NAMES: Record<string, string> = {
   dice: "Liar's Dice",
   sketch: "Sketch Duel",
   redblack: "Red or Black",
+  highlow: "Higher or Lower",
+  mostlikely: "Most Likely To",
 };
 
 export default function LeaderboardPage() {
