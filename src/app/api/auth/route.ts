@@ -7,7 +7,7 @@ export async function GET() {
     return Response.json({
       player: {
         ...player,
-        hasClaimed: !!(player as Record<string, unknown>).email,
+        hasClaimed: !!player.email,
       },
     });
   }

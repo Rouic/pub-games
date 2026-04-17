@@ -38,6 +38,8 @@ export interface Player {
   wins: number;
   losses: number;
   games_played: number;
+  email?: string;
+  display_name?: string;
 }
 
 /** Get the existing player from cookies (returns null if none). */

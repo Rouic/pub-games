@@ -11,6 +11,7 @@ interface Player {
   wins: number;
   losses: number;
   games_played: number;
+  hasClaimed?: boolean;
 }
 
 export default function Home() {
@@ -249,7 +250,7 @@ export default function Home() {
             >
               <span style={{ fontSize: "1.1rem" }}>{player.emoji}</span>
               <span style={{ fontWeight: 600, color: "#fff" }}>{player.name}</span>
-              {(player as Record<string, unknown>).hasClaimed ? (
+              {player.hasClaimed ? (
                 <span style={{ fontSize: "0.65rem", color: "var(--neon-green)" }}>✓</span>
               ) : (
                 <span style={{ fontSize: "0.6rem", opacity: 0.4, background: "rgba(255,255,255,0.1)", borderRadius: 4, padding: "1px 5px" }}>tap to save</span>

@@ -1,5 +1,5 @@
 import { getOrCreatePlayer } from "@/lib/auth";
-import { createRoom, joinRoom } from "@/lib/rooms";
+import { createRoom, joinRoom, broadcastEvent } from "@/lib/rooms";
 
 export async function POST(req: Request) {
   const player = await getOrCreatePlayer();
@@ -26,6 +26,8 @@ export async function POST(req: Request) {
         { status: 404 }
       );
     }
+    // Notify the host (and any other listeners) that a player joined
+    await broadcastEvent(room.id, { type: "player_joined", room });
     return Response.json({ room, player });
   }
 
