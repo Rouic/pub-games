@@ -1,5 +1,5 @@
 import { getPlayerId } from "@/lib/auth";
-import { getRoom, updateRoom, broadcastEvent } from "@/lib/rooms";
+import { getRoom, updateRoom, broadcastEvent, appendStroke, clearStrokes } from "@/lib/rooms";
 import { query } from "@/lib/db";
 import {
   type SketchState,
@@ -36,9 +36,9 @@ export async function POST(
     if (room.player_ids.length < 2)
       return Response.json({ error: "Need 2 players" }, { status: 400 });
 
-    state = { ...initSketchGame(room.player_ids), strokes: [] } as SketchState;
+    state = initSketchGame(room.player_ids);
     phase = "playing";
-    await updateRoom(roomId, phase, state);
+    await updateRoom(roomId, phase, { ...state, strokes: [] });
     // Send word only to the artist (via separate masked event)
     await broadcastEvent(roomId, {
       type: "game_started",
@@ -53,12 +53,8 @@ export async function POST(
     if (playerId !== state.artistId) {
       return Response.json({ error: "Not the artist" }, { status: 403 });
     }
-    // Persist stroke in room state so polling/reconnects can replay it
-    const strokes = ((state as unknown as Record<string, unknown>).strokes as unknown[] ?? []);
-    strokes.push(body.stroke);
-    // Cap at 500 strokes to avoid massive state
-    if (strokes.length > 500) strokes.shift();
-    await updateRoom(roomId, phase, { ...state, strokes });
+    // Atomic append — doesn't overwrite artistId/guesserId/phase
+    await appendStroke(roomId, body.stroke);
     await broadcastEvent(roomId, {
       type: "stroke",
       stroke: body.stroke,
@@ -71,7 +67,7 @@ export async function POST(
     if (playerId !== state.artistId) {
       return Response.json({ error: "Not the artist" }, { status: 403 });
     }
-    await updateRoom(roomId, phase, { ...state, strokes: [] });
+    await clearStrokes(roomId);
     await broadcastEvent(roomId, { type: "clear_canvas" });
     return Response.json({ ok: true });
   }
@@ -129,7 +125,7 @@ export async function POST(
     }
     // Collect used words from state history (simple: just the current word + any in extended state)
     const usedWords = [state.word];
-    state = { ...nextSketchRound(state, usedWords), strokes: [] } as SketchState;
+    state = nextSketchRound(state, usedWords);
     phase = state.winner ? "finished" : "playing";
 
     if (state.winner) {
@@ -146,7 +142,7 @@ export async function POST(
       }
     }
 
-    await updateRoom(roomId, phase, state);
+    await updateRoom(roomId, phase, { ...state, strokes: [] });
     await broadcastEvent(roomId, {
       type: state.winner ? "game_over" : "new_round",
       phase,

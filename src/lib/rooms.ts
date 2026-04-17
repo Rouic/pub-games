@@ -90,6 +90,33 @@ export async function updateRoom(
   return res.rows[0] as Room;
 }
 
+/** Append a stroke to the room state without overwriting other fields. */
+export async function appendStroke(roomId: string, stroke: unknown): Promise<void> {
+  await query(
+    `UPDATE rooms SET
+       state = jsonb_set(
+         jsonb_set(state, '{strokes}', COALESCE(state->'strokes', '[]'::jsonb) || $2::jsonb),
+         '{strokes}',
+         CASE
+           WHEN jsonb_array_length(COALESCE(state->'strokes', '[]'::jsonb)) > 500
+           THEN (COALESCE(state->'strokes', '[]'::jsonb) || $2::jsonb) - 0
+           ELSE COALESCE(state->'strokes', '[]'::jsonb) || $2::jsonb
+         END
+       ),
+       updated_at = now()
+     WHERE id = $1`,
+    [roomId, JSON.stringify([stroke])]
+  );
+}
+
+/** Clear strokes in room state without overwriting other fields. */
+export async function clearStrokes(roomId: string): Promise<void> {
+  await query(
+    `UPDATE rooms SET state = jsonb_set(state, '{strokes}', '[]'::jsonb), updated_at = now() WHERE id = $1`,
+    [roomId]
+  );
+}
+
 /** Broadcast an event to all listeners on this room via pg NOTIFY. */
 export async function broadcastEvent(
   roomId: string,
