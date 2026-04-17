@@ -271,6 +271,28 @@ export default function Home() {
           </button>
         </div>
 
+        {/* Pub Tracker */}
+        <button
+          className="game-card anim-slide"
+          onClick={() => router.push("/tracker")}
+          style={{
+            width: "100%",
+            animationDelay: "0.2s",
+            background: "linear-gradient(160deg, rgba(251,191,36,0.08), rgba(245,158,11,0.02))",
+            boxShadow: "0 8px 40px rgba(251,191,36,0.12), inset 0 1px 0 rgba(255,255,255,0.05)",
+            "--card-gradient": "linear-gradient(135deg, rgba(251,191,36,0.5), rgba(251,191,36,0.1))",
+            flexDirection: "row",
+            gap: "1rem",
+            padding: "1.25rem 1.5rem",
+          } as React.CSSProperties}
+        >
+          <div style={{ fontSize: "2.5rem" }}>🍻</div>
+          <div style={{ textAlign: "left" }}>
+            <div className="game-title">Pub Tracker</div>
+            <div className="game-desc">Rate pubs with friends. Track your favourites over time.</div>
+          </div>
+        </button>
+
         {/* Divider */}
         <div className="or-divider anim-fade" style={{ animationDelay: "0.3s" }}>or join a game</div>
 
