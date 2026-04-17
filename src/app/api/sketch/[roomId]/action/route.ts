@@ -8,6 +8,7 @@ import {
   scoreGuess,
   nextSketchRound,
 } from "@/lib/sketch-engine";
+// nextSketchRound now reads usedWords from state — no external param needed
 
 export async function POST(
   req: Request,
@@ -123,9 +124,7 @@ export async function POST(
     if (phase !== "round_end") {
       return Response.json({ ok: true }); // already advanced
     }
-    // Collect used words from state history (simple: just the current word + any in extended state)
-    const usedWords = [state.word];
-    state = nextSketchRound(state, usedWords);
+    state = nextSketchRound(state);
     phase = state.winner ? "finished" : "playing";
 
     if (state.winner) {
