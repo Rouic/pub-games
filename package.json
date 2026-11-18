@@ -9,11 +9,12 @@
     "db:init": "node scripts/init-db.mjs"
   },
   "dependencies": {
-    "next": "^15.5.0",
+    "nanoid": "^5.1.16",
+    "next": "^15.5.29",
+    "pg": "^8.13.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "pg": "^8.13.0",
-    "nanoid": "^5.1.5"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -21,5 +22,10 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "typescript": "^5.8.0"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.23"
+    }
   }
 }
